@@ -1,2 +1,2 @@
-# graphql-ios
-GraphQL Query Library
+# graphql-swift
+GraphQL Swift Query Library
