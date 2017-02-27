@@ -3,19 +3,19 @@
 //  Tribe
 //
 //  MIT License
-//  
+//
 //  Copyright (c) 2016 Tribe
-//  
+//
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
 //  in the Software without restriction, including without limitation the rights
 //  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 //  copies of the Software, and to permit persons to whom the Software is
 //  furnished to do so, subject to the following conditions:
-//  
+//
 //  The above copyright notice and this permission notice shall be included in all
 //  copies or substantial portions of the Software.
-//  
+//
 //  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 //  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 //  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -23,7 +23,7 @@
 //  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 //  SOFTWARE.
-//  
+//
 
 import Foundation
 
@@ -37,7 +37,7 @@ class NonEscapedGraphQLValue {
 }
 
 class GraphQL {
- 
+    
     private(set) var isMutation: Bool
     private(set) var name: String?
     private(set) var mutations: [ String : GraphQL ]
@@ -53,7 +53,7 @@ class GraphQL {
         self.fields    = fields
     }
     
-    private func build(isSubquery isSubquery: Bool) -> String {
+    public func build(isSubquery: Bool) -> String {
         
         var string = ""
         
@@ -62,15 +62,15 @@ class GraphQL {
         }
         
         if !self.mutations.isEmpty {
-            string += " { \(mapParams(self.mutations)) }"
+            string += " { \(mapParams(params: self.mutations)) }"
         }
         
         if !self.params.isEmpty {
-            string += " ( \(mapParams(self.params)) )"
+            string += " ( \(mapParams(params: self.params)) )"
         }
         
         if !self.fields.isEmpty {
-            string += " { \(mapFields(self.fields)) }"
+            string += " { \(mapFields(fields: self.fields)) }"
         }
         
         if !isSubquery && self.name != nil {
@@ -99,7 +99,7 @@ class GraphQL {
     }
     
     static func mutations(mutations: [ String : GraphQL ]) -> Self {
-        return self.init(mutations: mutations, isMutation: true)
+        return self.init(isMutation: true, mutations: mutations)
     }
     
     // Name
@@ -151,35 +151,35 @@ private func mapValue(value: AnyObject) -> String {
         
     } // STRING
     else if let value = value as? String {
-        return "\"\(value.stringByReplacingOccurrencesOfString("\"", withString: "\\\""))\""
+        return "\"\(value.replacingOccurrences(of: "\"", with: "\\\""))\""
         
-    // INT & BOOL
+        // INT & BOOL
     } else if value is Int {
         
         // TODO : Find a better way to detect booleans
-        if "\(value.dynamicType)" == "__NSCFBoolean" {
+        if "\(type(of: value))" == "__NSCFBoolean" {
             return (value as! Bool) ? "true" : "false"
         } else {
             return "\(value)"
         }
         
-    // FLOAT & DOUBLE
+        // FLOAT & DOUBLE
     } else if value is Float || value is Double {
         return "\(value)"
         
-    // ARRAY
+        // ARRAY
     } else if let value = value as? Array<AnyObject> {
         let mappedSubvalues = value
-            .map({ subvalue in return mapValue(subvalue) })
-            .joinWithSeparator(", ")
+            .map({ subvalue in return mapValue(value: subvalue) })
+            .joined(separator: ", ")
         
         return "[ \(mappedSubvalues) ]"
         
-    // DICTIONARY
+        // DICTIONARY
     } else if let value = value as? Dictionary<String, AnyObject> {
         let mappedSubvalues = value
-            .map({ (key, subvalue) in return "\(key) : \(mapValue(subvalue))" })
-            .joinWithSeparator(", ")
+            .map({ (key, subvalue) in return "\(key) : \(mapValue(value: subvalue))" })
+            .joined(separator: ", ")
         
         return "{ \(mappedSubvalues) }"
         
@@ -194,8 +194,8 @@ private func mapValue(value: AnyObject) -> String {
 private func mapParams(params: [ String : AnyObject ]) -> String {
     
     return params
-        .map({ (key, value) in return "\(key) : \(mapValue(value))" })
-        .joinWithSeparator(", ")
+        .map({ (key, value) in return "\(key) : \(mapValue(value: value))" })
+        .joined(separator: ", ")
 }
 
 private func mapFields(fields: [ AnyObject ]) -> String {
@@ -209,5 +209,5 @@ private func mapFields(fields: [ AnyObject ]) -> String {
                 return  "\(field)"
             }
         }
-        .joinWithSeparator(" ")
+        .joined(separator: " ")
 }
